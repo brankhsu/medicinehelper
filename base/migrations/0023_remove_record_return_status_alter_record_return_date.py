@@ -11,17 +11,17 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        migrations.AlterField(
             model_name='record',
             name='return_date',
             field=models.DateField(default=datetime.date.today),
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name='record',
             name='return_left',
             field=models.IntegerField(default=0),
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name='record',
             name='return_repeat',
             field=models.IntegerField(default=0),

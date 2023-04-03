@@ -39,6 +39,6 @@ class interactingDrugs(models.Model):
     record = models.ForeignKey(record, related_name="interactingDrugs", on_delete=models.DO_NOTHING,default=1)
 
 class SocialAccount(models.Model):
-    provider = models.CharField(max_length=200, default='google') # 若未來新增其他的登入方式,如Facebook,GitHub...
+    provider = models.CharField(max_length=200, default='google')
     unique_id = models.CharField(max_length=200)
     user = models.ForeignKey(user, related_name='social', on_delete=models.CASCADE)

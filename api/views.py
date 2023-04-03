@@ -1,8 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .serializers import userSerializer,drugSerializer,recordSerializer,interactingDrugsSerializer
+from .serializers import userSerializer,drugSerializer,recordSerializer,interactingDrugsSerializer,SocialLoginSerializer
 from base.models import user,drug,record,interactingDrugs
-
+from rest_framework.permissions import IsAuthenticated, IsAdminUser,AllowAny
+from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 @api_view(['GET'])
 def getdrugsRecordsList(request):
@@ -17,6 +22,25 @@ def getsingleRecord(request,pk):
     Serializer = recordSerializer(queryset, many=True)
     return Response(Serializer.data)
 
+@api_view(['GET'])
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
+
+class GoogleLogin(TokenObtainPairView):
+    permission_classes = (AllowAny,)  # AllowAny for login
+    serializer_class = SocialLoginSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.save()
+            return Response(get_tokens_for_user(user))
+        else:
+            raise ValueError('Not serializable')
 
 

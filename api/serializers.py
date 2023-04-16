@@ -1,9 +1,6 @@
 from rest_framework import serializers
 from base.models import user,drug,record,interactingDrugs,SocialAccount
 from rest_framework import serializers
-from django_restql.serializers import NestedModelSerializer
-from django_restql.mixins import DynamicFieldsMixin
-from django_restql.fields import NestedField
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -31,20 +28,20 @@ class interactingDrugsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class notificationSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+class notificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = record
         fields = ['notification_status', 'notification_startDate', 'notification_remind', 'notification_repeat']
 
 
-class returnSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+class returnSerializer(serializers.ModelSerializer):
     class Meta:
         model = record
         fields = ['return_status', 'return_date', 'return_left', 'return_repeat']
 
 
-class recordSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+class recordSerializer(serializers.ModelSerializer):
     drugs = drugSerializer(many=True, read_only=True)
     interactingDrugs = interactingDrugsSerializer(many=True, read_only=True)
     notificationSetting = notificationSerializer(source='*')

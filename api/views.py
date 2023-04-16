@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .serializers import userSerializer,drugSerializer,recordSerializer,interactingDrugsSerializer,SocialLoginSerializer
+from .serializers import userSerializer,drugSerializer,recordSerializer,interactingDrugsSerializer,SocialLoginSerializer,returnSerializer,notificationSerializer
 from base.models import user,drug,record,interactingDrugs
 from rest_framework.permissions import IsAuthenticated, IsAdminUser,AllowAny
 from rest_framework.response import Response
@@ -21,6 +21,12 @@ def getsingleRecord(request,pk):
     queryset = record.objects.filter(id=pk)
     Serializer = recordSerializer(queryset, many=True)
     return Response(Serializer.data)
+@api_view(['GET'])
+def interactingDrugs(request,name):
+
+    return Response()
+
+
 
 @api_view(['GET'])
 def get_tokens_for_user(user):
@@ -42,5 +48,7 @@ class GoogleLogin(TokenObtainPairView):
             return Response(get_tokens_for_user(user))
         else:
             raise ValueError('Not serializable')
+
+
 
 

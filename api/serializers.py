@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from base.models import user,drug,record,interactingDrugs,SocialAccount
 from rest_framework import serializers
-
+from django_restql.serializers import NestedModelSerializer
+from django_restql.mixins import DynamicFieldsMixin
+from django_restql.fields import NestedField
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -29,13 +31,27 @@ class interactingDrugsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class recordSerializer(serializers.ModelSerializer):
-    drugs = drugSerializer(many=True, read_only=True)
-    interactingDrugs = interactingDrugsSerializer(many=True, read_only=True)
+class notificationSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
 
     class Meta:
         model = record
-        fields = '__all__'
+        fields = ['notification_status', 'notification_startDate', 'notification_remind', 'notification_repeat']
+
+
+class returnSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+    class Meta:
+        model = record
+        fields = ['return_status', 'return_date', 'return_left', 'return_repeat']
+
+
+class recordSerializer(DynamicFieldsMixin,serializers.ModelSerializer):
+    drugs = drugSerializer(many=True, read_only=True)
+    interactingDrugs = interactingDrugsSerializer(many=True, read_only=True)
+    notificationSetting = notificationSerializer(source='*')
+    returnSetting = returnSerializer(source='*')
+    class Meta:
+        model = record
+        fields = ['id','drugs','ondemand','interactingDrugs','dosage','stock','position','frequency','timeSlot_1','timeSlot_2','timeSlot_3','timings_1','timings_2','notificationSetting','returnSetting']
 
 
 class SocialLoginSerializer(serializers.Serializer):
@@ -86,4 +102,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name']
 
+class TimeslotSerializer(serializers.ModelSerializer):
+
+
+    class Meta:
+        model = record
+        fields = '__all__'
 

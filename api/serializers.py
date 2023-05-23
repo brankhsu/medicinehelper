@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from base.models import user,drug,record,interactingDrugs,SocialAccount
+from base.models import user,drug,record,interactingDrugs,SocialAccount,timeslots
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,18 +15,21 @@ class userSerializer(serializers.ModelSerializer):
         model = user
         fields = '__all__'
 
-
 class drugSerializer(serializers.ModelSerializer):
     class Meta:
         model = drug
         fields = '__all__'
+        read_only_fields = ('rid',)
 
-
+class drugnameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = drug
+        fields = ['id','name']
 class interactingDrugsSerializer(serializers.ModelSerializer):
     class Meta:
         model = interactingDrugs
         fields = '__all__'
-
+        read_only_fields = ('rid',)
 
 class notificationSerializer(serializers.ModelSerializer):
 
@@ -40,15 +43,74 @@ class returnSerializer(serializers.ModelSerializer):
         model = record
         fields = ['return_status', 'return_date', 'return_left', 'return_repeat']
 
+class TimeslotsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = timeslots
+        fields = ['timeslot']
+
+    def to_representation(self, instance):
+        return instance.timeslot.strftime('%H:%M:%S')
+class drugPositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = record
+        fields = ['id','position']
+
 
 class recordSerializer(serializers.ModelSerializer):
-    drugs = drugSerializer(many=True, read_only=True)
-    interactingDrugs = interactingDrugsSerializer(many=True, read_only=True)
+    drugs = drugSerializer(many=True)
+    timeslots = serializers.SerializerMethodField()
+    interactingDrugs = interactingDrugsSerializer(many=True)
     notificationSetting = notificationSerializer(source='*')
     returnSetting = returnSerializer(source='*')
     class Meta:
         model = record
-        fields = ['id','drugs','ondemand','interactingDrugs','dosage','stock','position','frequency','timeSlot_1','timeSlot_2','timeSlot_3','timings_1','timings_2','notificationSetting','returnSetting']
+        fields = ['id','hospitalDeapartment','hospitalName','drugs','ondemand','interactingDrugs','dosage','stock','position','frequency','timeslots','timings_1','timings_2','notificationSetting','returnSetting']
+    def create(self, validated_data):
+        drugs_data = validated_data.pop('drugs')
+        interacting_drugs_data = validated_data.pop('interactingDrugs')
+
+        r = record.objects.create(**validated_data)
+        for data in drugs_data:
+            drug.objects.create(rid=r,**data)
+        for data in interacting_drugs_data:
+            interactingDrugs.objects.create(rid=r,**data)
+        return record
+
+    def get_timeslots(self, obj):
+        return [ts.timeslot for ts in obj.timeslots.all()]
+
+class reminderSerializer(serializers.ModelSerializer):
+    drug = serializers.SerializerMethodField()
+    timeSlot = serializers.SerializerMethodField()
+
+    class Meta:
+        model = record
+        fields = ('id', 'drug', 'timeSlot', 'dosage')
+
+    def get_drug(self, obj):
+           drug = obj.drugs.first()
+           return drugnameSerializer(drug).data
+
+    def get_timeSlot(self, instance):
+        timeslot = instance.timeslots.order_by('timeslot').first()
+        if timeslot:
+            return timeslot.timeslot
+        return None
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['timeSlot'] = representation.pop('timeSlot')
+        return representation
+
+
+
+class hospitalDepartmentsSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='hospitalDepartment')
+
+    class Meta:
+        model = record
+        fields = ['name']
+
 
 
 class SocialLoginSerializer(serializers.Serializer):

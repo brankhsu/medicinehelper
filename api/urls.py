@@ -7,6 +7,10 @@ urlpatterns= [
     path('drugsRecords/',views.getdrugsRecordsList),
     path('drugRecords/<str:pk>/',views.getsingleRecord),
     path('interactingDrugs?drugName=<str:name>',views.interactingDrugs),
+    path('createDrugRecord', views.createDrugRecord),
+    path('updateDrugRecord/<str:pk>/', views.updateDrugRecord),
     path('token/obtain/', GoogleLogin.as_view()),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('todayReminders/',views.todayReminders),
+    path('hospitalDepartments/', views.hospitalDepartments)
 ]

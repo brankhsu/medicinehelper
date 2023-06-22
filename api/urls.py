@@ -12,5 +12,6 @@ urlpatterns= [
     path('token/obtain/', GoogleLogin.as_view()),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('todayReminders/',views.todayReminders),
-    path('hospitalDepartments/', views.hospitalDepartments)
+    path('hospitalDepartments/', views.hospitalDepartments),
+    path('takeRecords',views.takeRecords)
 ]

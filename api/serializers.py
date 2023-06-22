@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from base.models import user,drug,record,interactingDrugs,SocialAccount,timeslots
+from base.models import user,drug,record,interactingDrugs,SocialAccount,timeslots,historyRecord,reminder
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -43,6 +43,10 @@ class returnSerializer(serializers.ModelSerializer):
         model = record
         fields = ['return_status', 'return_date', 'return_left', 'return_repeat']
 
+class hospitalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = record
+        fields = ['hospitalDepartment', 'hospitalName', 'hospitalphone', 'hospitalextension']
 class TimeslotsSerializer(serializers.ModelSerializer):
     class Meta:
         model = timeslots
@@ -54,17 +58,51 @@ class drugPositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = record
         fields = ['id','position']
+class historydrugSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length=50)
+
+class historyRecordSerializer(serializers.ModelSerializer):
+    drug = historydrugSerializer()
+
+    def create(self, validated_data):
+        drug_data = validated_data.pop('drug')
+        drug_id = drug_data['id']
+        drug_name = drug_data['name']
+        record = historyRecord.objects.create(drug_id=drug_id, drug_name=drug_name, **validated_data)
+        return record
+
+    def update(self, instance, validated_data):
+        drug_data = validated_data.pop('drug', None)
+        if drug_data:
+            drug_id = drug_data.get('id')
+            drug_name = drug_data.get('name')
+            instance.drug_id = drug_id
+            instance.drug_name = drug_name
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+
+    def delete(self, instance):
+        instance.delete()
+    class Meta:
+        model = historyRecord
+        fields = ['id','date','drug','dosage','timeSlot','status']
 
 
 class recordSerializer(serializers.ModelSerializer):
-    drugs = drugSerializer(many=True)
+    drug = serializers.SerializerMethodField()
+    hospital = serializers.SerializerMethodField()
     timeslots = serializers.SerializerMethodField()
+    timings = serializers.SerializerMethodField()
     interactingDrugs = interactingDrugsSerializer(many=True)
     notificationSetting = notificationSerializer(source='*')
     returnSetting = returnSerializer(source='*')
     class Meta:
         model = record
-        fields = ['id','hospitalDeapartment','hospitalName','drugs','ondemand','interactingDrugs','dosage','stock','position','frequency','timeslots','timings_1','timings_2','notificationSetting','returnSetting']
+        fields = ['id','hospital','drug','ondemand','interactingDrugs','dosage','stock','position','frequency','timeslots','timings','notificationSetting','returnSetting']
+
     def create(self, validated_data):
         drugs_data = validated_data.pop('drugs')
         interacting_drugs_data = validated_data.pop('interactingDrugs')
@@ -79,6 +117,20 @@ class recordSerializer(serializers.ModelSerializer):
     def get_timeslots(self, obj):
         return [ts.timeslot for ts in obj.timeslots.all()]
 
+    def get_timings(self, obj):
+        return [ts.timings for ts in obj.timings.all()]
+
+    def get_drug(self, obj):
+           drug = obj.drugs.first()
+           return drugSerializer(drug).data
+
+    def get_hospital(self, obj):
+        return {
+            'name': obj.hospitalName,
+            'department': obj.hospitalDepartment,
+            'phone': obj.hospitalphone,
+            'extension': obj.hospitalextension
+        }
 class reminderSerializer(serializers.ModelSerializer):
     drug = serializers.SerializerMethodField()
     timeSlot = serializers.SerializerMethodField()
@@ -102,6 +154,33 @@ class reminderSerializer(serializers.ModelSerializer):
         representation['timeSlot'] = representation.pop('timeSlot')
         return representation
 
+class todayreminderSerializer(serializers.ModelSerializer):
+    drug = historydrugSerializer()
+
+    def create(self, validated_data):
+        drug_data = validated_data.pop('drug')
+        drug_id = drug_data['id']
+        drug_name = drug_data['name']
+        record = reminder.objects.create(drug_id=drug_id, drug_name=drug_name, **validated_data)
+        return record
+
+    def update(self, instance, validated_data):
+        drug_data = validated_data.pop('drug', None)
+        if drug_data:
+            drug_id = drug_data.get('id')
+            drug_name = drug_data.get('name')
+            instance.drug_id = drug_id
+            instance.drug_name = drug_name
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+
+    def delete(self, instance):
+        instance.delete()
+    class Meta:
+        model = reminder
+        fields = ['id','date','drug','timeSlot','dosage','position','stock']
 
 
 class hospitalDepartmentsSerializer(serializers.ModelSerializer):
@@ -110,6 +189,7 @@ class hospitalDepartmentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = record
         fields = ['name']
+
 
 
 

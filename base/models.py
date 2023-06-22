@@ -4,6 +4,8 @@ import datetime
 class record(models.Model):
     hospitalDepartment = models.CharField(max_length=50, default='')
     hospitalName = models.CharField(max_length=50, default='')
+    hospitalphone = models.CharField(max_length=50, default='')
+    hospitalextension = models.CharField(max_length=50, default='')
     stock = models.IntegerField(default=0)
     dosage = models.IntegerField()
     ondemand = models.BooleanField(default=False)
@@ -47,7 +49,24 @@ class interactingDrugs(models.Model):
     name = models.CharField(max_length=20,default=" ")
     cause = models.CharField(max_length=100,null=True,default=" ")
     rid = models.ForeignKey(record, related_name="interactingDrugs", on_delete=models.DO_NOTHING)
+
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=200, default='google')
     unique_id = models.CharField(max_length=200)
     user = models.ForeignKey(user, related_name='social', on_delete=models.CASCADE)
+
+class reminder(models.Model):
+    drug_id = models.IntegerField(default=0)
+    drug_name = models.CharField(max_length=20,default=" ")
+    timeSlot = models.TimeField(default='09:00:00')
+    dosage = models.IntegerField(default=0)
+    position = models.IntegerField(default=0)
+    stock = models.IntegerField(default=0)
+
+class historyRecord(models.Model):
+    date = models.DateField(default=datetime.date.today)
+    timeSlot = models.TimeField(default='09:00:00')
+    drug_id = models.IntegerField(default=0)
+    drug_name = models.CharField(max_length=20,default=" ")
+    dosage = models.IntegerField(default=0)
+    status = models.IntegerField(default=0)

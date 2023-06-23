@@ -9,6 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
+import datetime
+
 
 @api_view(['GET'])
 def getdrugsRecordsList(request):
@@ -50,19 +52,44 @@ def drugPosition(request):
     return Response(Serializer.data)
 
 
-@api_view(["GET", "DELETE"])
-def todayReminders(request,pk):
-    if request.method == "GET":
+@api_view(["DELETE"])
+def deleteReminders(request,pk):
+    reminder.objects.get(id=pk).delete()
+    queryset = reminder.objects.all()
+    serializer = todayreminderSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def todayReminders(request,date):
+    datetime_obj = datetime.strptime(date, '%Y/%m/%d')
+    date_obj = datetime_obj.date()  # 提取日期部分并转换为 date 对象
+
+    # 检查是否存在对应日期的 historyRecord
+    if not historyRecord.objects.filter(date=date_obj).exists():
+        # 从 reminder 中获取符合条件的数据
+        reminders = reminder.objects.all()
+
+        # 根据 reminders 创建新的 historyRecord
+        for r in reminders:
+            historyRecord.objects.create(
+                date=date_obj,
+                timeSlot=r.timeSlot,
+                drug_id=r.drug_id,
+                drug_name=r.drug_name,
+                dosage=r.dosage,
+                status=2
+            )
+            # 删除reminder中的对应数据
+            r.delete()
         queryset = record.objects.all()
         serializer = reminderSerializer(queryset, many=True)
         Serializer = todayreminderSerializer(data=serializer.data)
-        if Serializer.is_valid():
+        if Serializer.is_valid() and not reminder.objects.all().exists():
             Serializer.save()
         return Response(serializer.data)
-    elif request.method == "DELETE":
-        reminder.objects.get(id=pk).delete()
+    else:
         queryset = reminder.objects.all()
-        serializer = todayreminderSerializer(queryset, many=True)
+        serializer = reminderSerializer(queryset, many=True)
         return Response(serializer.data)
 
 @api_view(['GET'])

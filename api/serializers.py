@@ -26,11 +26,16 @@ class drugnameSerializer(serializers.ModelSerializer):
         model = drug
         fields = ['id','name']
 class interactingDrugsSerializer(serializers.ModelSerializer):
+    timeSlots = serializers.SerializerMethodField()
+
     class Meta:
         model = interactingDrugs
-        fields = '__all__'
+        fields = ['id','level','name','cause','timeSlots']
         read_only_fields = ('rid',)
 
+    def get_timeSlots(self, obj):
+        timeslots = obj.rid.timeslots.all().order_by('timeslot')
+        return [str(timeslot.timeslot.strftime('%H:%M')) for timeslot in timeslots]
 class notificationSerializer(serializers.ModelSerializer):
 
     class Meta:

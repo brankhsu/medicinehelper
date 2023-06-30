@@ -24,10 +24,11 @@ class record(models.Model):
 
 class timeslots(models.Model):
     timeslot = models.TimeField(default='09:00:00')
-    record = models.ForeignKey(record, related_name="timeslots", on_delete=models.DO_NOTHING,default=1)
+    rid = models.ForeignKey(record, related_name="timeslots", on_delete=models.DO_NOTHING,default=1)
+
 class timings(models.Model):
     timing = models.IntegerField(default=0)
-    record = models.ForeignKey(record, related_name="timings", on_delete=models.DO_NOTHING,default=1)
+    rid = models.ForeignKey(record, related_name="timings", on_delete=models.DO_NOTHING,default=1)
 
 class user(models.Model):
     username = models.CharField(max_length=50, default='')
@@ -41,14 +42,14 @@ class drug(models.Model):
     appearance = models.CharField(max_length=100)
     indications = models.CharField(max_length=50)
     sideEffect = models.CharField(max_length=100)
-    rid = models.ForeignKey(record, related_name="drugs", on_delete=models.DO_NOTHING)
+    rid = models.ForeignKey(record, related_name="drugs", on_delete=models.CASCADE)
 
 
 class interactingDrugs(models.Model):
     level = models.CharField(max_length=20,default=" ")
     name = models.CharField(max_length=20,default=" ")
     cause = models.CharField(max_length=100,null=True,default=" ")
-    rid = models.ForeignKey(record, related_name="interactingDrugs", on_delete=models.DO_NOTHING)
+    rid = models.ForeignKey(record, related_name="interactingDrugs", on_delete=models.CASCADE)
 
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=200, default='google')
@@ -59,14 +60,8 @@ class reminder(models.Model):
     drug_id = models.IntegerField(default=0)
     drug_name = models.CharField(max_length=20,default=" ")
     timeSlot = models.TimeField(default='09:00:00')
-    dosage = models.IntegerField(default=0)
-    position = models.IntegerField(default=0)
-    stock = models.IntegerField(default=0)
-
-class historyRecord(models.Model):
     date = models.DateField(default=datetime.date.today)
-    timeSlot = models.TimeField(default='09:00:00')
-    drug_id = models.IntegerField(default=0)
-    drug_name = models.CharField(max_length=20,default=" ")
-    dosage = models.IntegerField(default=0)
     status = models.IntegerField(default=0)
+    rid = models.ForeignKey(record, related_name="reminders", on_delete=models.CASCADE)
+
+

@@ -19,11 +19,21 @@ def drugsRecords(request):
         Serializer = recordSerializer(queryset,many =True)
         return Response(Serializer.data)
     if request.method == 'POST':
-        Serializer = recordSerializer(data=request.data)
-        if Serializer.is_valid():
-            Serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        drug = request.data.get('drug')
+        drugname = request.data.get('name')
+
+        if drug.objects.filter(name=drugname).exist:
+            record_instance = drug.objects.filter(name=drugname).rid
+            Serializer = recordSerializer(instance=record_instance, data=request.data)
+            if Serializer.is_valid():
+                Serializer.save()
+            return Response({'success': True})
+        else:
+            Serializer = recordSerializer(data=request.data)
+            if Serializer.is_valid():
+                Serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET',"DELETE","PATCH"])
 def singleRecordWithid(request,pk):
@@ -49,7 +59,49 @@ def singleRecordWithid(request,pk):
             Serializer.save()
         return Response(Serializer.data)
 
+@api_view(['GET'])
+def drugsRecordswithName(request,name):
+    queryset = drug.objects.filter(name__startswith=name)
+    if queryset.exists():
+        if queryset.count() == 1:
+            record_instance = queryset.rid
+            Serializer = recordSerializer(record_instance)
+            return Response(Serializer.data)
+        elif queryset.count() >= 2:
+            record_instances = [d.rid for d in queryset]
 
+            # 使用recordSerializer对记录进行序列化
+            Serializer = recordSerializer(record_instances, many=True)
+            return Response(Serializer.data)
+    else:
+        return Response("drug not found")
+@api_view(['GET'])
+def drugsRecordswithhospitalName(request,hospitalName):
+    queryset = record.objects.filter(hospitalName__startswith=hospitalName)
+    if queryset.exists():
+        if queryset.count() == 1:
+            Serializer = recordSerializer(queryset)
+            return Response(Serializer.data)
+        elif queryset.count() >= 2:
+            # 使用recordSerializer对记录进行序列化
+            Serializer = recordSerializer(queryset, many=True)
+            return Response(Serializer.data)
+    else:
+        return Response("record not found")
+
+@api_view(['GET'])
+def drugsRecordsonDemand(request):
+    queryset = record.objects.filter(ondemand=True)
+    if queryset.exists():
+        if queryset.count() == 1:
+            Serializer = recordSerializer(queryset)
+            return Response(Serializer.data)
+        elif queryset.count() >= 2:
+            # 使用recordSerializer对记录进行序列化
+            Serializer = recordSerializer(queryset, many=True)
+            return Response(Serializer.data)
+    else:
+        return Response("record not found")
 @api_view(['GET'])
 def hospitalDepartments(request):
     departments = record.objects.values('hospitalDepartment').distinct()
